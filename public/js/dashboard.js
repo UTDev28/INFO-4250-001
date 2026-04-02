@@ -108,24 +108,70 @@ function actionColor(a){
 // ═══════════════════════════════════════════
 //  2. ANOMALIES (Explain the Weird Stuff)
 // ═══════════════════════════════════════════
-(function renderAnomalies() {
+function renderAnomalies(filtered) {
+  const list = (filtered || ANOMALIES).slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
   const tbody = document.querySelector('#anomaly-table tbody');
-  tbody.innerHTML = ANOMALIES.sort((a,b)=>b.riskScore-a.riskScore).map((e,i) => `<tr>
+  tbody.innerHTML = list.map((e,i) => `<tr>
     <td>${fmtTime(e.timestamp)}</td>
     <td>${e.userName} <span style="color:var(--muted);font-size:11px">(${e.userRole})</span></td>
     <td><span style="color:${actionColor(e.action)}">${e.action}</span></td>
     <td>${e.table}</td>
     <td style="color:${riskColor(e.riskScore)};font-weight:600">${e.riskScore}</td>
-    <td><button class="why-btn" data-idx="${i}">Why is this weird?</button></td>
+    <td><button class="why-btn" data-anomaly-id="${e.id}">Why is this weird?</button></td>
   </tr>`).join('');
 
-  tbody.addEventListener('click', ev => {
+  // Store current list for modal lookups
+  window._currentAnomalyList = list;
+
+  const status = document.getElementById('anomaly-filter-status');
+  if (filtered) {
+    status.textContent = `Showing ${list.length} of ${ANOMALIES.length} anomalies`;
+  } else {
+    status.textContent = '';
+  }
+}
+
+(function initAnomalies() {
+  renderAnomalies();
+
+  // Set default date range from data
+  const timestamps = ANOMALIES.map(e => new Date(e.timestamp));
+  const minDate = new Date(Math.min(...timestamps));
+  const maxDate = new Date(Math.max(...timestamps));
+  document.getElementById('anomaly-date-from').value = minDate.toISOString().split('T')[0];
+  document.getElementById('anomaly-date-to').value = maxDate.toISOString().split('T')[0];
+
+  document.querySelector('#anomaly-table tbody').addEventListener('click', ev => {
     const btn = ev.target.closest('.why-btn');
     if (!btn) return;
-    const e = ANOMALIES[+btn.dataset.idx];
-    showAnomalyModal(e);
+    const id = +btn.dataset.anomalyId;
+    const e = (window._currentAnomalyList || ANOMALIES).find(a => a.id === id);
+    if (e) showAnomalyModal(e);
+  });
+
+  document.getElementById('anomaly-date-apply').addEventListener('click', applyAnomalyDateFilter);
+  document.getElementById('anomaly-date-clear').addEventListener('click', () => {
+    const timestamps = ANOMALIES.map(e => new Date(e.timestamp));
+    document.getElementById('anomaly-date-from').value = new Date(Math.min(...timestamps)).toISOString().split('T')[0];
+    document.getElementById('anomaly-date-to').value = new Date(Math.max(...timestamps)).toISOString().split('T')[0];
+    renderAnomalies();
   });
 })();
+
+function applyAnomalyDateFilter() {
+  const fromVal = document.getElementById('anomaly-date-from').value;
+  const toVal   = document.getElementById('anomaly-date-to').value;
+  if (!fromVal && !toVal) { renderAnomalies(); return; }
+
+  const from = fromVal ? new Date(fromVal + 'T00:00:00') : new Date(0);
+  const to   = toVal   ? new Date(toVal + 'T23:59:59')   : new Date(8640000000000000);
+
+  const filtered = ANOMALIES.filter(e => {
+    const t = new Date(e.timestamp);
+    return t >= from && t <= to;
+  });
+  renderAnomalies(filtered);
+}
 
 function showAnomalyModal(e) {
   const body = document.getElementById('modal-body');
