@@ -1,0 +1,12 @@
+{
+  "name": "pandabase-security-auditing",
+  "version": "1.0.0",
+  "description": "pandaBase Security Auditing welcome application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
