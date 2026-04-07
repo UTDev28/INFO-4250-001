@@ -697,7 +697,7 @@ function startRealtime() {
     const table = pick(TABLES);
     const action = pick(ACTIONS);
     const risk  = riskForEvent(action, table.name, user, new Date().getHours());
-    const isAnomaly = risk >= 75;
+    const isAnomaly = user.id === 'hacker_x';
     const ts = new Date().toLocaleTimeString();
 
     const line = document.createElement('div');
