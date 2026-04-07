@@ -108,6 +108,41 @@ function actionColor(a){
 // ═══════════════════════════════════════════
 //  2. ANOMALIES (Explain the Weird Stuff)
 // ═══════════════════════════════════════════
+
+function getSuggestedFix(e) {
+  if (e.action === 'DROP')
+    return 'Revoke DROP privileges and restrict DDL operations to authorized DBAs only.';
+  if (e.action === 'TRUNCATE' && e.table === 'audit_log')
+    return 'Lock the audit_log table against TRUNCATE and enable immutable logging.';
+  if (e.action === 'TRUNCATE')
+    return 'Restrict TRUNCATE permissions and require approval for bulk data removal.';
+  if (e.action === 'GRANT')
+    return 'Review and revoke excessive privileges. Enable least-privilege access policies.';
+  if (e.action === 'REVOKE')
+    return 'Audit recent privilege changes and verify they align with change-management records.';
+  if (e.userRole === 'External')
+    return 'Block external IP access immediately and investigate the source.';
+  if (e.userRole === 'Intern' && ['credentials', 'api_keys', 'salary_data'].includes(e.table))
+    return 'Restrict intern access to sensitive tables. Apply role-based access controls.';
+  if (e.action === 'DELETE' && e.riskScore >= 40)
+    return 'Enable soft-delete policies and require multi-party approval for mass deletions.';
+  if (e.anomalyReason?.includes('outside normal business hours'))
+    return 'Enforce time-based access restrictions or require MFA for off-hours access.';
+  if (e.anomalyReason?.includes('spike in query volume'))
+    return 'Implement rate limiting and alert thresholds for abnormal query volumes.';
+  if (e.anomalyReason?.includes('Bulk data export'))
+    return 'Set row-count export limits and flag bulk download patterns in DLP policies.';
+  if (e.anomalyReason?.includes('SQL injection'))
+    return 'Enforce parameterized queries and deploy a Web Application Firewall (WAF).';
+  if (e.anomalyReason?.includes('failed login'))
+    return 'Enable account lockout after repeated failures and enforce MFA.';
+  if (e.anomalyReason?.includes('new IP address'))
+    return 'Whitelist known service-account IPs and alert on connections from new sources.';
+  if (e.sensitivity === 'critical')
+    return 'Tighten access controls on this critical table and enable detailed query logging.';
+  return 'Investigate the activity and review user permissions for this resource.';
+}
+
 function renderAnomalies(filtered) {
   const list = (filtered || ANOMALIES).slice().sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
   const tbody = document.querySelector('#anomaly-table tbody');
@@ -117,6 +152,7 @@ function renderAnomalies(filtered) {
     <td><span style="color:${actionColor(e.action)}">${e.action}</span></td>
     <td>${e.table}</td>
     <td style="color:${riskColor(e.riskScore)};font-weight:600">${e.riskScore}</td>
+    <td style="font-size:12px;color:var(--accent2);max-width:260px">${getSuggestedFix(e)}</td>
     <td><button class="why-btn" data-anomaly-id="${e.id}">Why is this weird?</button></td>
   </tr>`).join('');
 
@@ -190,7 +226,11 @@ function showAnomalyModal(e) {
       ${e.riskScore >= 70 ? 'Immediate investigation is recommended. This could indicate a security breach or policy violation.' :
         e.riskScore >= 40 ? 'This warrants attention. Review the user\'s recent activity for further suspicious behavior.' :
         'While not critical, this pattern is unusual and should be noted in the audit trail.'}
-    </p>`;
+    </p>
+    <div style="margin-top:14px;padding:12px 14px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px">
+      <strong style="color:var(--accent2)">🛠 Suggested Fix:</strong>
+      <p style="margin-top:6px;font-size:13px;line-height:1.6;color:var(--text)">${getSuggestedFix(e)}</p>
+    </div>`;
   document.getElementById('anomaly-modal').classList.add('show');
 }
 
@@ -657,7 +697,7 @@ function startRealtime() {
     const table = pick(TABLES);
     const action = pick(ACTIONS);
     const risk  = riskForEvent(action, table.name, user, new Date().getHours());
-    const isAnomaly = risk >= 50;
+    const isAnomaly = risk >= 75;
     const ts = new Date().toLocaleTimeString();
 
     const line = document.createElement('div');

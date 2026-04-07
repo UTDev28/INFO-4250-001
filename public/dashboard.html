@@ -32,7 +32,7 @@
       padding:0;overflow-y:auto;
     }
     .sidebar-brand{
-      display:block;padding:20px 18px 16px;
+      display:block;padding:20px 18px 16px;color:var(--text);
       font-size:18px;font-weight:700;border-bottom:1px solid var(--border);
     }
     .sidebar-brand .green{color:var(--accent)}
@@ -362,7 +362,7 @@
 
   <!-- ════ SIDEBAR ════ -->
   <aside class="sidebar">
-    <div class="sidebar-brand">🐼 <span class="green">panda</span>Base</div>
+    <a href="index.html" class="sidebar-brand">🐼 <span class="green">panda</span>Base</a>
     <ul class="sidebar-nav" id="nav">
       <li><button class="active" data-view="overview"><span class="icon">📊</span>Overview</button></li>
       <li><button data-view="anomalies"><span class="icon">🔍</span>Anomalies</button></li>
@@ -377,10 +377,7 @@
       <li><button data-view="definitions"><span class="icon">📖</span>Definitions</button></li>
     </ul>
     <div class="sidebar-footer">
-      <a href="/" style="display:inline-block;padding:6px 14px;font-size:11px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:6px;text-decoration:none;margin-bottom:10px;transition:all .15s"
-         onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
-         onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">← Back to Welcome</a>
-      <br/>pandaBase Security Auditing v1.0<br/>© 2026
+      pandaBase Security Auditing v1.0<br/>© 2026
     </div>
   </aside>
 
@@ -425,7 +422,7 @@
         </div>
         <div class="card" style="padding:0;overflow:auto;max-height:600px">
           <table class="log-table" id="anomaly-table">
-            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Table</th><th>Risk</th><th>Explain</th></tr></thead>
+            <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Table</th><th>Risk</th><th>Suggested Fix</th><th>Explain</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
